@@ -1,12 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:testing_app/api/api.dart';
-import 'package:testing_app/components/post/post.dart' as post_widget;
-import 'package:testing_app/class/post.dart';
-import 'package:testing_app/pages/search.dart';
+import 'package:testing_app/pages/home_page.dart';
+import 'package:testing_app/route_generator.dart';
+import 'package:localstore/localstore.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MyApp());
 }
 
 const cardDetails = [
@@ -78,67 +77,17 @@ const cardDetails = [
 ];
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
+  MyApp({Key? key}) : super(key: key);
+  final _db = Localstore.instance;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const HomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  late Future<Post> futurePost;
-
-  @override
-  void initState() {
-    super.initState();
-    futurePost = fetchPosts();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.pink,
-          actions: [
-            IconButton(
-                onPressed: () => Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => const SearchPage())),
-                icon: const Icon(Icons.search))
-          ],
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
         ),
-        body: FutureBuilder<Post>(
-          future: futurePost,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return ListView(children: [
-                for (var i in cardDetails)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    child: post_widget.Post(
-                      details: i,
-                    ),
-                  )
-              ]);
-            } else if (snapshot.hasError) {
-              return Text('${snapshot.error}');
-            }
-            return const Center(child: CircularProgressIndicator());
-          },
-        ));
+        home: const HomePage(),
+        onGenerateRoute: RouteGenerator.generateRoute);
   }
 }

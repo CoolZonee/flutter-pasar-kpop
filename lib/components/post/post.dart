@@ -1,9 +1,27 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
 
-class Post extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:testing_app/api/user_api.dart';
+import 'package:testing_app/class/post_class.dart' as post_class;
+
+class Post extends StatefulWidget {
   const Post({Key? key, required final this.details}) : super(key: key);
 
-  final Map details;
+  final post_class.Post details;
+
+  @override
+  State<Post> createState() => _PostState();
+}
+
+class _PostState extends State<Post> {
+  late String username = "";
+  @override
+  void initState() {
+    super.initState();
+    getUser(widget.details.creator)
+        .then((value) => {setState(() => username = value.username)})
+        .catchError((error) => print(error));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +34,7 @@ class Post extends StatelessWidget {
                 child: Column(
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Align(
                           alignment: Alignment.topLeft,
@@ -24,39 +43,42 @@ class Post extends StatelessWidget {
                             child: CircleAvatar(
                                 radius: 20,
                                 backgroundImage: Image.asset(
-                                        'assets/avatars/${details["avatarName"]}')
+                                        'assets/avatars/${widget.details.avatarName}')
                                     .image),
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${details["creator"]}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15),
-                            ),
-                            Text(
-                              '${details["uploadDateTime"]}',
-                            )
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                username,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 15),
+                              ),
+                              Text(
+                                widget.details.createdAt,
+                              )
+                            ],
+                          ),
                         )
                       ],
                     ),
-                    Image.asset('assets/images/${details["imageName"]}'),
+                    Image.asset('assets/images/${widget.details.imageName}'),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('${details["title"]}'),
+                            Text(widget.details.title),
                             Row(
                               children: [
-                                for (var i in details["group"])
+                                for (var i in widget.details.group)
                                   GroupRoundedWidget(groupName: i),
                               ],
                             ),
-                            Text('${details["price"]}')
+                            Text(widget.details.price)
                           ]),
                     ),
                   ],
