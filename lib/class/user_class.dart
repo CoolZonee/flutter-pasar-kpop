@@ -27,7 +27,7 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      map['id'] ?? '',
+      map['_id'] ?? map['id'] ?? '',
       map['username'] ?? '',
       map['email'] ?? '',
       map['avatarName'] ?? '',
@@ -39,7 +39,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      json['id'] ?? '',
+      json['_id'] ?? json['id'] ?? '',
       json['username'] ?? '',
       json['email'] ?? '',
       json['avatarName'] ?? '',
@@ -50,22 +50,6 @@ class User {
   @override
   String toString() {
     return 'User(id: $id, username: $username, email: $email, avatarName: $avatarName, createdAt: $createdAt)';
-  }
-
-  User copyWith({
-    String? id,
-    String? username,
-    String? email,
-    String? avatarName,
-    String? createdAt,
-  }) {
-    return User(
-      id ?? this.id,
-      username ?? this.username,
-      email ?? this.email,
-      avatarName ?? this.avatarName,
-      createdAt ?? this.createdAt,
-    );
   }
 
   @override
@@ -87,5 +71,21 @@ class User {
         email.hashCode ^
         avatarName.hashCode ^
         createdAt.hashCode;
+  }
+
+  User copyWith({
+    String? id,
+    String? username,
+    String? email,
+    String? avatarName,
+    String? createdAt,
+  }) {
+    return User(
+      id ?? this.id,
+      username ?? this.username,
+      email ?? this.email,
+      avatarName ?? this.avatarName,
+      createdAt ?? this.createdAt,
+    );
   }
 }

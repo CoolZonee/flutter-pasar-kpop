@@ -10,7 +10,6 @@ Future<User> getUser(String id) async {
         await http.get(Uri.parse('${globals.apiURLPrefix}/users/$id'));
     if (response.statusCode == 200) {
       var body = jsonDecode(response.body);
-
       return User.fromJson(body);
     }
   } catch (error, stacktrace) {

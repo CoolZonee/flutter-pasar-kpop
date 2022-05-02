@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:localstore/localstore.dart';
 import 'package:testing_app/api/auth_api.dart';
@@ -17,8 +14,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final AuthAPI authAPI = AuthAPI();
   final _db = Localstore.instance;
-  final _data = <String, dynamic>{};
   late String errorMsg = "";
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -27,20 +24,19 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
+    super.initState();
     _usernameController.text = "";
     _passwordController.text = "";
   }
 
   @override
   Widget build(BuildContext context) {
-    final _deviceSize = MediaQuery.of(context).size;
-
     void handleLogin() {
       errorMsg = "";
       onLoading(context, "Logging in...");
-      login(_usernameController.text, _passwordController.text).then((user) {
-        _db.collection('user').doc(user.id).set(user.toMap());
-        _db.collection('isLoggedIn').doc('status').set({"isLoggedIn": true});
+      authAPI
+          .login(_usernameController.text, _passwordController.text)
+          .then((user) {
         Navigator.of(context).pop();
         Navigator.pushNamedAndRemoveUntil(context, const HomePage().route,
             ModalRoute.withName(const HomePage().route));
@@ -51,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
         });
 
         Navigator.of(context).pop();
+        _passwordController.clear();
         _passwordFocusNode.unfocus();
         _usernameFocusNode.requestFocus();
       });

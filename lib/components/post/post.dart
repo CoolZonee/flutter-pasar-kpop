@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:testing_app/api/post_api.dart';
 import 'package:testing_app/api/user_api.dart';
 import 'package:testing_app/class/post_class.dart' as post_class;
+import 'package:testing_app/class/user_class.dart';
+import 'package:testing_app/pages/login/login_page.dart';
 
 class Post extends StatefulWidget {
   const Post({Key? key, required final this.details}) : super(key: key);
@@ -14,13 +19,73 @@ class Post extends StatefulWidget {
 }
 
 class _PostState extends State<Post> {
+  final storage = const FlutterSecureStorage();
   late String username = "";
+  final PostAPI postAPI = PostAPI();
+  bool isLiked = false;
+  bool isLoggedIn = false;
+  late User currentUser = User("", "", "", "", "");
   @override
   void initState() {
     super.initState();
-    getUser(widget.details.creator)
-        .then((value) => {setState(() => username = value.username)})
-        .catchError((error) => print(error));
+    refreshPost();
+    storage.read(key: 'isLoggedIn').then((value) => setState(() {
+          isLoggedIn = value == 'true' ? true : false;
+        }));
+  }
+
+  @override
+  void didUpdateWidget(Post oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    refreshPost();
+  }
+
+  void likePost() async {
+    if (!isLoggedIn) {
+      Navigator.of(context).pushNamed(const LoginPage().route);
+      return;
+    }
+    await postAPI.likePost(widget.details.id, currentUser.id);
+    setState(() {
+      isLiked = !isLiked;
+    });
+  }
+
+  void refreshPost() async {
+    getUser(widget.details.creator.id).then((user) {
+      setState(() => username = user.username);
+    }).catchError((error, stackTrace) {
+      log(stackTrace.toString());
+      log(error.toString());
+    });
+    storage.read(key: 'user').then((user) {
+      if (user != null) {
+        currentUser = User.fromJson(jsonDecode(user));
+      } else {
+        currentUser = User("", "", "", "", "");
+      }
+      checkIfLiked();
+    });
+  }
+
+  void checkIfLiked() {
+    if (currentUser.id != "") {
+      for (User user in widget.details.likedBy) {
+        if (currentUser.id == user.id) {
+          setState(() {
+            isLiked = true;
+          });
+          break;
+        }
+        setState(() {
+          isLiked = false;
+        });
+      }
+    } else {
+      setState(() {
+        isLiked = false;
+      });
+    }
   }
 
   @override
@@ -65,21 +130,49 @@ class _PostState extends State<Post> {
                         )
                       ],
                     ),
-                    Image.asset('assets/images/${widget.details.imageName}'),
+                    GestureDetector(
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  content: SizedBox(
+                                    child: Image.asset(
+                                        'assets/images/${widget.details.imageName}'),
+                                  ),
+                                );
+                              });
+                        },
+                        child: Image.asset(
+                            'assets/images/${widget.details.imageName}')),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(widget.details.title),
-                            Row(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                for (var i in widget.details.group)
-                                  GroupRoundedWidget(groupName: i),
-                              ],
-                            ),
-                            Text(widget.details.price)
-                          ]),
+                                Text(widget.details.title),
+                                Row(
+                                  children: [
+                                    for (var i in widget.details.group)
+                                      GroupRoundedWidget(groupName: i),
+                                  ],
+                                ),
+                                Text(widget.details.price)
+                              ]),
+                          IconButton(
+                              splashRadius: 20,
+                              onPressed: likePost,
+                              icon: Icon(
+                                isLiked
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_outline_rounded,
+                                color: Colors.pink,
+                              ))
+                        ],
+                      ),
                     ),
                   ],
                 ))));

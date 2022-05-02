@@ -1,29 +1,35 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+
+import 'package:testing_app/class/user_class.dart';
 
 class Post {
   final String id;
   final String imageName;
   final List category;
   final String title;
-  final String creator;
+  final User creator;
   final String avatarName;
   final String price;
   final bool isIncludePos;
-  final List group;
+  final List<String> group;
   final String createdAt;
+  final List<User> likedBy;
 
   Post(
-      this.id,
-      this.imageName,
-      this.category,
-      this.title,
-      this.creator,
-      this.avatarName,
-      this.price,
-      this.isIncludePos,
-      this.group,
-      this.createdAt);
+    this.id,
+    this.imageName,
+    this.category,
+    this.title,
+    this.creator,
+    this.avatarName,
+    this.price,
+    this.isIncludePos,
+    this.group,
+    this.createdAt,
+    this.likedBy,
+  );
 
   Map<String, dynamic> toMap() {
     return {
@@ -31,27 +37,29 @@ class Post {
       'imageName': imageName,
       'category': category,
       'title': title,
-      'creator': creator,
+      'creator': creator.toMap(),
       'avatarName': avatarName,
       'price': price,
       'isIncludePos': isIncludePos,
       'group': group,
       'createdAt': createdAt,
+      'likedBy': likedBy.map((x) => x.toMap()).toList(),
     };
   }
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
-      map['id'] ?? '',
+      map['_id'] ?? map['id'] ?? '',
       map['imageName'] ?? '',
       List.from(map['category']),
       map['title'] ?? '',
-      map['creator'] ?? '',
+      User.fromMap(map['creator']),
       map['avatarName'] ?? '',
       map['price'] ?? '',
       map['isIncludePos'] ?? false,
-      List.from(map['group']),
+      List<String>.from(map['group']),
       map['createdAt'] ?? '',
+      List<User>.from(map['likedBy']?.map((x) => User.fromMap(x))),
     );
   }
 
@@ -59,16 +67,17 @@ class Post {
 
   factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
-      json['id'] ?? '',
+      json['_id'] ?? json['id'] ?? '',
       json['imageName'] ?? '',
       List.from(json['category']),
       json['title'] ?? '',
-      json['creator'] ?? '',
+      User.fromJson(json['creator'][0]),
       json['avatarName'] ?? '',
       json['price'] ?? '',
       json['isIncludePos'] ?? false,
-      List.from(json['group']),
+      List<String>.from(json['group']),
       json['createdAt'] ?? '',
+      List<User>.from(json['likedBy']?.map((x) => User.fromJson(x))),
     );
   }
 
@@ -77,12 +86,13 @@ class Post {
     String? imageName,
     List? category,
     String? title,
-    String? creator,
+    User? creator,
     String? avatarName,
     String? price,
     bool? isIncludePos,
-    List? group,
+    List<String>? group,
     String? createdAt,
+    List<User>? likedBy,
   }) {
     return Post(
       id ?? this.id,
@@ -95,12 +105,13 @@ class Post {
       isIncludePos ?? this.isIncludePos,
       group ?? this.group,
       createdAt ?? this.createdAt,
+      likedBy ?? this.likedBy,
     );
   }
 
   @override
   String toString() {
-    return 'Post(id: $id, imageName: $imageName, category: $category, title: $title, creator: $creator, avatarName: $avatarName, price: $price, isIncludePos: $isIncludePos, group: $group, createdAt: $createdAt)';
+    return 'Post(id: $id, imageName: $imageName, category: $category, title: $title, creator: $creator, avatarName: $avatarName, price: $price, isIncludePos: $isIncludePos, group: $group, createdAt: $createdAt, likedBy: $likedBy)';
   }
 
   @override
@@ -117,7 +128,8 @@ class Post {
         other.price == price &&
         other.isIncludePos == isIncludePos &&
         listEquals(other.group, group) &&
-        other.createdAt == createdAt;
+        other.createdAt == createdAt &&
+        listEquals(other.likedBy, likedBy);
   }
 
   @override
@@ -131,6 +143,7 @@ class Post {
         price.hashCode ^
         isIncludePos.hashCode ^
         group.hashCode ^
-        createdAt.hashCode;
+        createdAt.hashCode ^
+        likedBy.hashCode;
   }
 }
