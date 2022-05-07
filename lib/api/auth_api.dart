@@ -6,7 +6,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthAPI {
   final storage = const FlutterSecureStorage();
-
   Map<String, String> headers = {};
   Map<String, dynamic> cookies = {};
   String userId = '';
@@ -120,7 +119,6 @@ class AuthAPI {
 
     if (cookie != null) {
       cookies = Map<String, dynamic>.from(jsonDecode(cookie));
-      // print(cookies);
       headers['cookie'] = generateCookieHeader();
     } else {
       cookies = {};

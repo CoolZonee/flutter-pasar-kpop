@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:localstore/localstore.dart';
+import 'package:provider/provider.dart';
 import 'package:testing_app/api/auth_api.dart';
+import 'package:testing_app/class/user_class.dart';
 import 'package:testing_app/components/post/loading_spinner.dart';
-import 'package:testing_app/pages/home_page.dart';
+import 'package:testing_app/models/auth_model.dart';
+import 'package:testing_app/pages/home_page/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
-  final String route = "/login";
+  static const String route = "/login";
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -15,7 +19,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final AuthAPI authAPI = AuthAPI();
-  final _db = Localstore.instance;
+  final storage = const FlutterSecureStorage();
   late String errorMsg = "";
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -25,40 +29,41 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+
     _usernameController.text = "";
     _passwordController.text = "";
   }
 
   @override
   Widget build(BuildContext context) {
-    void handleLogin() {
+    void handleLogin() async {
       errorMsg = "";
       onLoading(context, "Logging in...");
-      authAPI
-          .login(_usernameController.text, _passwordController.text)
-          .then((user) {
+      try {
+        User user = await authAPI.login(
+            _usernameController.text, _passwordController.text);
+        Provider.of<AuthModel>(context, listen: false).login(user);
         Navigator.of(context).pop();
-        Navigator.pushNamedAndRemoveUntil(context, const HomePage().route,
-            ModalRoute.withName(const HomePage().route));
-      }).catchError((error) {
-        _db.collection('isLoggedIn').doc('status').set({"isLoggedIn": false});
+
+        await Navigator.of(context).pushReplacementNamed(HomePage.route);
+      } catch (error) {
         setState(() {
-          errorMsg = error.message.toString();
+          errorMsg = error.toString().split("Exception: ")[1];
         });
 
         Navigator.of(context).pop();
         _passwordController.clear();
         _passwordFocusNode.unfocus();
         _usernameFocusNode.requestFocus();
-      });
+      }
     }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const BackButton(color: Colors.pink),
       ),
       body: Center(
         child: Column(

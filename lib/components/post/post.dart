@@ -1,13 +1,16 @@
-import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:testing_app/api/image_api.dart';
 import 'package:testing_app/api/post_api.dart';
 import 'package:testing_app/api/user_api.dart';
 import 'package:testing_app/class/post_class.dart' as post_class;
 import 'package:testing_app/class/user_class.dart';
-import 'package:testing_app/pages/login/login_page.dart';
+import 'package:testing_app/models/auth_model.dart';
+import 'package:testing_app/models/post_model.dart';
 
 class Post extends StatefulWidget {
   const Post({Key? key, required final this.details}) : super(key: key);
@@ -22,74 +25,63 @@ class _PostState extends State<Post> {
   final storage = const FlutterSecureStorage();
   late String username = "";
   final PostAPI postAPI = PostAPI();
+  final ImageAPI imageAPI = ImageAPI();
   bool isLiked = false;
-  bool isLoggedIn = false;
-  late User currentUser = User("", "", "", "", "");
+  late final Future? _imageFuture = _getImage();
+
   @override
   void initState() {
+    print("rerender");
     super.initState();
     refreshPost();
-    storage.read(key: 'isLoggedIn').then((value) => setState(() {
-          isLoggedIn = value == 'true' ? true : false;
-        }));
   }
 
-  @override
-  void didUpdateWidget(Post oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    refreshPost();
-  }
-
-  void likePost() async {
-    if (!isLoggedIn) {
-      Navigator.of(context).pushNamed(const LoginPage().route);
-      return;
+  Future<void> likePost() async {
+    try {
+      await postAPI.likePost(widget.details.id,
+          Provider.of<AuthModel>(context, listen: false).getCurrentUser.id);
+      Provider.of<PostModel>(context, listen: false).likePost(widget.details.id,
+          Provider.of<AuthModel>(context, listen: false).getCurrentUser);
+      setState(() {
+        isLiked = !isLiked;
+      });
+    } catch (error) {
+      print(error);
     }
-    await postAPI.likePost(widget.details.id, currentUser.id);
-    setState(() {
-      isLiked = !isLiked;
-    });
   }
 
   void refreshPost() async {
     getUser(widget.details.creator.id).then((user) {
-      setState(() => username = user.username);
+      if (mounted) {
+        setState(() => username = user.username);
+      }
     }).catchError((error, stackTrace) {
       log(stackTrace.toString());
       log(error.toString());
     });
-    storage.read(key: 'user').then((user) {
-      if (user != null) {
-        currentUser = User.fromJson(jsonDecode(user));
-      } else {
-        currentUser = User("", "", "", "", "");
-      }
-      checkIfLiked();
-    });
   }
 
-  void checkIfLiked() {
-    if (currentUser.id != "") {
+  Future<Uint8List> _getImage() async {
+    return await imageAPI.getImage(widget.details.imageName);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String id = Provider.of<AuthModel>(context).getCurrentUser.id;
+    if (id != "") {
       for (User user in widget.details.likedBy) {
-        if (currentUser.id == user.id) {
+        if (id == user.id) {
           setState(() {
             isLiked = true;
           });
           break;
         }
-        setState(() {
-          isLiked = false;
-        });
       }
     } else {
       setState(() {
         isLiked = false;
       });
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         child: SizedBox(
@@ -130,21 +122,30 @@ class _PostState extends State<Post> {
                         )
                       ],
                     ),
-                    GestureDetector(
-                        onTap: () {
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  content: SizedBox(
-                                    child: Image.asset(
-                                        'assets/images/${widget.details.imageName}'),
-                                  ),
-                                );
-                              });
-                        },
-                        child: Image.asset(
-                            'assets/images/${widget.details.imageName}')),
+                    FutureBuilder(
+                      future: _imageFuture,
+                      builder: ((context, snapshot) {
+                        if (snapshot.hasData) {
+                          return GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      content: SizedBox(
+                                        child: Image.memory(
+                                            snapshot.data as Uint8List),
+                                      ),
+                                    );
+                                  });
+                            },
+                            child: Image.memory(snapshot.data as Uint8List),
+                          );
+                        } else {
+                          return CircularProgressIndicator();
+                        }
+                      }),
+                    ),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Row(
@@ -164,7 +165,9 @@ class _PostState extends State<Post> {
                               ]),
                           IconButton(
                               splashRadius: 20,
-                              onPressed: likePost,
+                              onPressed: () async {
+                                await likePost();
+                              },
                               icon: Icon(
                                 isLiked
                                     ? Icons.favorite_rounded

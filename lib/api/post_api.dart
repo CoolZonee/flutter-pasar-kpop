@@ -18,7 +18,8 @@ class PostAPI {
         var body = jsonDecode(response.body);
 
         for (var i in body) {
-          data.add(Post.fromJson(i));
+          Post post = Post.fromJson(i);
+          data.add(post);
         }
         return data;
       } else if (response.statusCode == 403) {
@@ -50,7 +51,6 @@ class PostAPI {
   }
 
   Future<void> likePost(String postId, String userId) async {
-    print(postId + userId);
     try {
       var header = await authAPI.getHeader();
       final response = await http.put(
@@ -61,6 +61,10 @@ class PostAPI {
       if (response.statusCode == 200) {
         authAPI.updateCookie(response);
         return;
+      }
+      if (response.statusCode == 403) {
+        await authAPI.refreshToken();
+        await likePost(postId, userId);
       }
 
       throw ("Like Post Failed.");

@@ -39,6 +39,10 @@ dependencies:
   localstore: ^1.2.3
   localstorage: ^4.0.0+1
   flutter_secure_storage: ^4.2.1
+  provider: ^6.0.2
+  image_picker: ^0.7.2+1
+  path: ^1.8.0
+  async: ^2.8.2
 
 dev_dependencies:
   flutter_test:

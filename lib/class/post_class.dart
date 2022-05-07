@@ -49,7 +49,7 @@ class Post {
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
-      map['_id'] ?? map['id'] ?? '',
+      map['id'] ?? '',
       map['imageName'] ?? '',
       List.from(map['category']),
       map['title'] ?? '',

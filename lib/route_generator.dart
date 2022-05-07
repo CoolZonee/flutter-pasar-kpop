@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:testing_app/pages/home_page.dart';
+import 'package:testing_app/pages/home_page/home_page.dart';
 import 'package:testing_app/pages/login/login_page.dart';
 import 'package:testing_app/pages/search_page.dart';
 
@@ -9,7 +9,7 @@ class RouteGenerator {
     // final args = settings.arguments;
 
     switch (settings.name) {
-      case '/':
+      case '/home':
         return CupertinoPageRoute(builder: (_) => const HomePage());
       case '/search':
         return PageRouteBuilder(
