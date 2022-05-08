@@ -24,7 +24,6 @@ class _SearchPageState extends State<SearchPage> {
             child: Center(
                 child: TextField(
                     controller: _searchController,
-                    autofocus: true,
                     decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: IconButton(
@@ -33,7 +32,7 @@ class _SearchPageState extends State<SearchPage> {
                         hintText: 'Search...',
                         border: InputBorder.none))),
           ),
-          backgroundColor: Colors.pink),
+          backgroundColor: Colors.transparent),
     );
   }
 }

@@ -96,8 +96,9 @@ class AuthAPI {
         var value = keyValue[1];
 
         // ignore keys that aren't cookies
-        if (key.toLowerCase() == 'path' || key.toLowerCase() == 'expires')
+        if (key.toLowerCase() == 'path' || key.toLowerCase() == 'expires') {
           return;
+        }
 
         cookies[key] = value;
       }

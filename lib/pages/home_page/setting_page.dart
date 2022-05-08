@@ -8,9 +8,14 @@ import '../../api/auth_api.dart';
 import '../../components/post/confirmation_dialog_box.dart';
 import '../../components/post/loading_spinner.dart';
 
-class SettingPage extends StatelessWidget {
+class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
 
+  @override
+  State<SettingPage> createState() => _SettingPageState();
+}
+
+class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     final AuthAPI authAPI = AuthAPI();
@@ -37,7 +42,7 @@ class SettingPage extends StatelessWidget {
       });
     }
 
-    return ListView(padding: EdgeInsets.zero, children: [
+    return ListView(shrinkWrap: false, primary: false, children: [
       SizedBox(
           child: ListTile(
               title: Consumer<AuthModel>(builder: (context, auth, child) {

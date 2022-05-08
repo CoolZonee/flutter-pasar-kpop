@@ -1,16 +1,18 @@
 import 'dart:developer';
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+
 import 'package:testing_app/api/image_api.dart';
 import 'package:testing_app/api/post_api.dart';
-import 'package:testing_app/api/user_api.dart';
 import 'package:testing_app/class/post_class.dart' as post_class;
 import 'package:testing_app/class/user_class.dart';
 import 'package:testing_app/models/auth_model.dart';
 import 'package:testing_app/models/post_model.dart';
+import 'package:testing_app/globals.dart' as globals;
 
 class Post extends StatefulWidget {
   const Post({Key? key, required final this.details}) : super(key: key);
@@ -27,42 +29,64 @@ class _PostState extends State<Post> {
   final PostAPI postAPI = PostAPI();
   final ImageAPI imageAPI = ImageAPI();
   bool isLiked = false;
-  late final Future? _imageFuture = _getImage();
+  late final Future? _imgFuture = _getImage();
+  late final Future? _avatarFuture = _getAvatar();
+  String _postTimeAgo = "";
 
   @override
   void initState() {
-    print("rerender");
     super.initState();
-    refreshPost();
+    username = widget.details.creator.username;
+    DateTime _now = DateTime.now();
+    DateTime _postTime = DateTime.parse(widget.details.createdAt.toString());
+    int difference = _now.difference(_postTime).inSeconds;
+    if (difference >= 60 && difference < 3600) {
+      int time = (difference ~/ 60);
+      String ago = time == 1 ? " minute ago" : " minutes ago";
+      _postTimeAgo = time.toString() + ago;
+    } else if (difference >= 3600 && difference < 86400) {
+      int time = (difference ~/ 3600);
+      String ago = time == 1 ? " hour ago" : " hours ago";
+      _postTimeAgo = time.toString() + ago;
+    } else if (difference >= 86400 && difference < 2628288) {
+      int time = (difference ~/ 86400);
+      String ago = time == 1 ? " day ago" : " days ago";
+      _postTimeAgo = time.toString() + ago;
+    } else if (difference >= 2628288 && difference < 31536000) {
+      int time = (difference ~/ 2628288);
+      String ago = time == 1 ? " month ago" : " months ago";
+      _postTimeAgo = time.toString() + ago;
+    } else if (difference >= 31536000) {
+      int time = (difference ~/ 31536000);
+      String ago = time == 1 ? " year ago" : " years ago";
+      _postTimeAgo = time.toString() + ago;
+    } else {
+      String ago = difference == 1 ? " second ago" : " seconds ago";
+      _postTimeAgo = difference.toString() + ago;
+    }
   }
 
   Future<void> likePost() async {
     try {
-      await postAPI.likePost(widget.details.id,
+      await postAPI.likePost(widget.details.id.toString(),
           Provider.of<AuthModel>(context, listen: false).getCurrentUser.id);
-      Provider.of<PostModel>(context, listen: false).likePost(widget.details.id,
+      Provider.of<PostModel>(context, listen: false).likePost(
+          widget.details.id.toString(),
           Provider.of<AuthModel>(context, listen: false).getCurrentUser);
       setState(() {
         isLiked = !isLiked;
       });
     } catch (error) {
-      print(error);
-    }
-  }
-
-  void refreshPost() async {
-    getUser(widget.details.creator.id).then((user) {
-      if (mounted) {
-        setState(() => username = user.username);
-      }
-    }).catchError((error, stackTrace) {
-      log(stackTrace.toString());
       log(error.toString());
-    });
+    }
   }
 
   Future<Uint8List> _getImage() async {
     return await imageAPI.getImage(widget.details.imageName);
+  }
+
+  Future<Uint8List> _getAvatar() async {
+    return await imageAPI.getImage(widget.details.creator.avatarName);
   }
 
   @override
@@ -94,16 +118,26 @@ class _PostState extends State<Post> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Align(
-                          alignment: Alignment.topLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 0, 10, 10),
-                            child: CircleAvatar(
-                                radius: 20,
-                                backgroundImage: Image.asset(
-                                        'assets/avatars/${widget.details.avatarName}')
-                                    .image),
-                          ),
-                        ),
+                            alignment: Alignment.topLeft,
+                            child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(0, 0, 10, 10),
+                                child: CachedNetworkImage(
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  imageUrl:
+                                      '${globals.apiURLPrefix}/images/${widget.details.creator.avatarName}',
+                                  imageBuilder: (context, imageProvider) =>
+                                      Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        image: DecorationImage(
+                                            image: imageProvider,
+                                            fit: BoxFit.cover)),
+                                  ),
+                                ))),
                         Padding(
                           padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
                           child: Column(
@@ -115,36 +149,18 @@ class _PostState extends State<Post> {
                                     fontWeight: FontWeight.bold, fontSize: 15),
                               ),
                               Text(
-                                widget.details.createdAt,
+                                _postTimeAgo.toString(),
                               )
                             ],
                           ),
                         )
                       ],
                     ),
-                    FutureBuilder(
-                      future: _imageFuture,
-                      builder: ((context, snapshot) {
-                        if (snapshot.hasData) {
-                          return GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      content: SizedBox(
-                                        child: Image.memory(
-                                            snapshot.data as Uint8List),
-                                      ),
-                                    );
-                                  });
-                            },
-                            child: Image.memory(snapshot.data as Uint8List),
-                          );
-                        } else {
-                          return CircularProgressIndicator();
-                        }
-                      }),
+                    CachedNetworkImage(
+                      placeholder: (context, url) =>
+                          const CircularProgressIndicator(),
+                      imageUrl:
+                          '${globals.apiURLPrefix}/images/${widget.details.imageName}',
                     ),
                     Align(
                       alignment: Alignment.centerLeft,

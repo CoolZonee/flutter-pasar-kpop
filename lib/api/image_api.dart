@@ -1,13 +1,9 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:async/async.dart';
 import 'package:path/path.dart';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 
 class ImageAPI {

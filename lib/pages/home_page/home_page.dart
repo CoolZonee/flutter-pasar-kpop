@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:provider/provider.dart';
 import 'package:testing_app/api/auth_api.dart';
-import 'package:testing_app/models/post_model.dart';
-import 'package:testing_app/pages/home_page/add_post.dart';
+import 'package:testing_app/pages/home_page/add_post_page.dart';
+import 'package:testing_app/pages/home_page/favourite_page.dart';
+import 'package:testing_app/pages/home_page/post_list_page.dart';
+import 'package:testing_app/pages/home_page/search_page.dart';
 import 'package:testing_app/pages/home_page/setting_page.dart';
-import 'package:testing_app/pages/search_page.dart';
-import '../../components/post/post.dart' as post_widget;
-import '../../api/post_api.dart';
+import 'package:testing_app/api/post_api.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -25,70 +24,49 @@ class _HomePageState extends State<HomePage> {
   late List<Widget> _widgetOptions = <Widget>[];
   int _selectedIndex = 0;
 
-  // widget
-  Widget _buildPost() {
-    // pull to refresh the post
-    return RefreshIndicator(onRefresh: _pullRefresh, child: _postView());
-  }
-
-  Widget _postView() {
-    return Consumer<PostModel>(builder: (context, value, child) {
-      if (!value.isLoading) {
-        return ListView(
-          shrinkWrap: false,
-          primary: false,
-          children: [
-            // load a list of posts
-            for (var i in value.getPosts)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                child: post_widget.Post(
-                  details: i,
-                ),
-              ),
-          ],
-        );
-      } else {
-        return const CircularProgressIndicator();
-      }
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    getPosts();
-    _widgetOptions = [_buildPost(), const AddPostPage(), const SettingPage()];
-  }
 
-  Future<void> getPosts() async {
-    try {
-      final posts = await postAPI.getPosts();
-      Provider.of<PostModel>(context, listen: false).setPosts(posts);
-    } catch (error) {
-      return Future.error(error);
-    }
-  }
-
-  Future<void> _pullRefresh() async {
-    getPosts();
+    _widgetOptions = [
+      const PostListPage(),
+      // avoid other pages built unnecessarily
+      const SizedBox(),
+      const SizedBox(),
+      const SizedBox(),
+      const SizedBox(),
+    ];
   }
 
   void onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      if (_widgetOptions[index] is SizedBox) {
+        if (index == 1) {
+          _widgetOptions[index] = const SearchPage();
+          return;
+        }
+
+        if (index == 2) {
+          _widgetOptions[index] = const AddPostPage();
+          return;
+        }
+
+        if (index == 3) {
+          _widgetOptions[index] = const FavouritePage();
+          return;
+        }
+
+        if (index == 4) {
+          _widgetOptions[index] = const SettingPage();
+          return;
+        }
+      }
     });
+    _selectedIndex = index; 
   }
 
   @override
   Widget build(BuildContext context) {
-    Size deviceSize = MediaQuery.of(context).size;
-    double _searchBarWidth = deviceSize.width * 0.60;
-
-    if (deviceSize.width > 768) {
-      _searchBarWidth = 400;
-    }
-
     return Scaffold(
       bottomNavigationBar: SizedBox(
         height: 50,
@@ -96,56 +74,63 @@ class _HomePageState extends State<HomePage> {
           enableFeedback: true,
           elevation: 5,
           items: [
-            _getBotNavItem(Icons.home, "Home", 30),
-            _getBotNavItem(Icons.add_circle_outline, "Add Post", 40),
-            _getBotNavItem(Icons.account_circle_rounded, "Account", 30),
+            _getBotNavItem(
+                _selectedIndex == 0 ? Icons.home : Icons.home_outlined,
+                "Home",
+                _selectedIndex == 0 ? 35 : 30),
+            _getBotNavItem(
+                Icons.search, "Search", _selectedIndex == 1 ? 35 : 30),
+            _getBotNavItem(
+                _selectedIndex == 2
+                    ? Icons.add_circle
+                    : Icons.add_circle_outline,
+                "Add Post",
+                _selectedIndex == 2 ? 35 : 30),
+            _getBotNavItem(
+                _selectedIndex == 3
+                    ? Icons.favorite
+                    : Icons.favorite_border_outlined,
+                "Favourite",
+                _selectedIndex == 3 ? 35 : 30),
+            _getBotNavItem(
+                _selectedIndex == 4
+                    ? Icons.account_circle_rounded
+                    : Icons.account_circle_outlined,
+                "Account",
+                _selectedIndex == 4 ? 35 : 30),
           ],
           currentIndex: _selectedIndex,
+          unselectedItemColor: Colors.pink,
           selectedItemColor: Colors.pink,
+          backgroundColor: Colors.white,
           onTap: onItemTapped,
           selectedFontSize: 0,
           unselectedFontSize: 0,
           showSelectedLabels: false,
           showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
         ),
       ),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false, // remove back button
-        backgroundColor: Colors.pink,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            GestureDetector(
-              onTap: () {},
-              child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Image.asset('assets/logo/logo.png')),
-            ),
-            Center(
-              child: Container(
-                width: _searchBarWidth,
-                height: 40,
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(5)),
-                child: Center(
-                    child: TextField(
-                        readOnly: true,
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(const SearchPage().route);
-                        },
-                        decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.search),
-                            hintText: 'Search...',
-                            border: InputBorder.none))),
-              ),
-            ),
-          ],
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          "Pasar KPOP",
+          style: TextStyle(color: Colors.pink, fontFamily: "WaterBrush"),
         ),
       ),
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      // keep page alive when switching (without rebuild)
+      body: WillPopScope(
+        onWillPop: () async {
+          return !await Navigator.maybePop(context);
+        },
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _widgetOptions,
+        ),
+      ),
     );
   }
 

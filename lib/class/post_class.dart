@@ -5,16 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:testing_app/class/user_class.dart';
 
 class Post {
-  final String id;
+  final String? id;
   final String imageName;
   final List category;
   final String title;
   final User creator;
-  final String avatarName;
   final String price;
   final bool isIncludePos;
   final List<String> group;
-  final String createdAt;
+  final String? createdAt;
   final List<User> likedBy;
 
   Post(
@@ -23,7 +22,6 @@ class Post {
     this.category,
     this.title,
     this.creator,
-    this.avatarName,
     this.price,
     this.isIncludePos,
     this.group,
@@ -38,7 +36,6 @@ class Post {
       'category': category,
       'title': title,
       'creator': creator.toMap(),
-      'avatarName': avatarName,
       'price': price,
       'isIncludePos': isIncludePos,
       'group': group,
@@ -49,16 +46,15 @@ class Post {
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
-      map['id'] ?? '',
+      map['id'],
       map['imageName'] ?? '',
       List.from(map['category']),
       map['title'] ?? '',
       User.fromMap(map['creator']),
-      map['avatarName'] ?? '',
       map['price'] ?? '',
       map['isIncludePos'] ?? false,
       List<String>.from(map['group']),
-      map['createdAt'] ?? '',
+      map['createdAt'],
       List<User>.from(map['likedBy']?.map((x) => User.fromMap(x))),
     );
   }
@@ -72,7 +68,6 @@ class Post {
       List.from(json['category']),
       json['title'] ?? '',
       User.fromJson(json['creator'][0]),
-      json['avatarName'] ?? '',
       json['price'] ?? '',
       json['isIncludePos'] ?? false,
       List<String>.from(json['group']),
@@ -87,7 +82,6 @@ class Post {
     List? category,
     String? title,
     User? creator,
-    String? avatarName,
     String? price,
     bool? isIncludePos,
     List<String>? group,
@@ -100,7 +94,6 @@ class Post {
       category ?? this.category,
       title ?? this.title,
       creator ?? this.creator,
-      avatarName ?? this.avatarName,
       price ?? this.price,
       isIncludePos ?? this.isIncludePos,
       group ?? this.group,
@@ -111,7 +104,7 @@ class Post {
 
   @override
   String toString() {
-    return 'Post(id: $id, imageName: $imageName, category: $category, title: $title, creator: $creator, avatarName: $avatarName, price: $price, isIncludePos: $isIncludePos, group: $group, createdAt: $createdAt, likedBy: $likedBy)';
+    return 'Post(id: $id, imageName: $imageName, category: $category, title: $title, creator: $creator, price: $price, isIncludePos: $isIncludePos, group: $group, createdAt: $createdAt, likedBy: $likedBy)';
   }
 
   @override
@@ -124,7 +117,6 @@ class Post {
         listEquals(other.category, category) &&
         other.title == title &&
         other.creator == creator &&
-        other.avatarName == avatarName &&
         other.price == price &&
         other.isIncludePos == isIncludePos &&
         listEquals(other.group, group) &&
@@ -139,7 +131,6 @@ class Post {
         category.hashCode ^
         title.hashCode ^
         creator.hashCode ^
-        avatarName.hashCode ^
         price.hashCode ^
         isIncludePos.hashCode ^
         group.hashCode ^

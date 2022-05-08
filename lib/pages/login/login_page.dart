@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:localstore/localstore.dart';
 import 'package:provider/provider.dart';
 import 'package:testing_app/api/auth_api.dart';
 import 'package:testing_app/class/user_class.dart';
